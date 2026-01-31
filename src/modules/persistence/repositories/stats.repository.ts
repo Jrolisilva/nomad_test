@@ -97,4 +97,36 @@ export class StatsRepository {
           b.frags - a.frags || a.deaths - b.deaths || a.playerName.localeCompare(b.playerName),
       );
   }
+  async findWinnerByMatchId(
+    matchId: number,
+  ): Promise<
+    {
+      playerId: number;
+      playerName: string;
+      frags: number;
+      deaths: number;
+    } | null
+  > {
+    const stats = await this.prisma.matchPlayerStats.findMany({
+      where: { matchId },
+      include: { player: true },
+      orderBy: [
+        { frags: 'desc' },
+        { deaths: 'asc' },
+        { player: { name: 'asc' } },
+      ],
+      take: 1,
+    });
+
+    if (stats.length === 0) {
+      return null;
+    }
+
+    return {
+      playerId: stats[0].playerId,
+      playerName: stats[0].player.name,
+      frags: stats[0].frags,
+      deaths: stats[0].deaths,
+    };
+  }
 }

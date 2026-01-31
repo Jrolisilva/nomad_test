@@ -21,4 +21,26 @@ export class KillEventRepository {
 
     return this.prisma.killEvent.createMany({ data });
   }
+
+  async findFavoriteWeapon(
+    matchId: number,
+    killerId: number,
+  ): Promise<string | null> {
+    const grouped = await this.prisma.killEvent.groupBy({
+      by: ['weapon'],
+      where: {
+        matchId,
+        killerId,
+        isWorld: false,
+      },
+      _count: { weapon: true },
+      orderBy: { _count: { weapon: 'desc' } },
+    });
+
+    if (grouped.length === 0) {
+      return null;
+    }
+
+    return grouped[0].weapon;
+  }
 }
