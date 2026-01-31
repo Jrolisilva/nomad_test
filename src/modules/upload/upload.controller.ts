@@ -1,7 +1,16 @@
-import { Controller } from '@nestjs/common';
-import { UploadService } from './upload.service';
+import { Controller, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { UploadService } from "./upload.service";
+import type { UploadLogResponseDto } from "./dto/upload.dto";
+import type  Multer  from "multer";
 
-@Controller('upload')
+@Controller("upload")
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
+
+  @Post()
+  @UseInterceptors(FileInterceptor("file"))
+  uploadLog(@UploadedFile() file: Multer.File): UploadLogResponseDto {
+    return this.uploadService.processLog(file);
+  }
 }

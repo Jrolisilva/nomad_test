@@ -10,4 +10,18 @@ export class ParserService {
     private readonly killParser: KillParser,
     private readonly matchEndParser: MatchEndParser,
   ) {}
+
+  parse(content: string): { totalLines: number } {
+    const lines = content
+      .split(/\r?\n/)
+      .filter((line) => line.trim().length > 0);
+
+    for (const line of lines) {
+      this.matchStartParser.tryParse(line);
+      this.killParser.tryParse(line);
+      this.matchEndParser.tryParse(line);
+    }
+
+    return { totalLines: lines.length };
+  }
 }
