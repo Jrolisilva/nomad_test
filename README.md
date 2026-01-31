@@ -23,76 +23,85 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+API para processamento de logs de FPS, geração de rankings e estatísticas.
 
-## Project setup
+## Como subir a aplicação
 
-```bash
-$ npm install
-```
-
-## Compile and run the project
+### Rodando via Docker (recomendado)
 
 ```bash
-# development
-$ npm run start
+# build da imagem
+docker compose build
 
-# watch mode
-$ npm run start:dev
+# subir a aplicação
+docker compose up
 
-# production mode
-$ npm run start:prod
+# rodar migrations (uma vez)
+docker compose exec api npx prisma migrate dev --name init
 ```
 
-## Run tests
+### Rodando localmente
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm install
+npx prisma migrate dev --name init
+npm run start:dev
 ```
 
-## Deployment
+## Como usar os endpoints (curl)
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### 1) Upload do log
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Arquivo de exemplo: `sample.log` (raiz do projeto).
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+curl -F "file=@sample.log" http://localhost:3000/upload
+```
+```bash
+{"message":"Log recebido. Linhas processadas: 16.","matchesProcessed":3}%
+```
+### 2) Ranking por partida (exemplo)
+
+```bash
+curl http://localhost:3000/matches/11348965/ranking
+```
+```bash
+{"matchId":"11348965","ranking":[{"player":"Roman","frags":1,"deaths":0},{"player":"Nick","frags":0,"deaths":2}]}
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 3) Ranking global de jogadores (exemplo)
 
-## Resources
+```bash
+curl http://localhost:3000/players/ranking
+```
+```bash
+{"ranking":[{"player":"Roman","frags":4,"deaths":0},{"player":"Bryan","frags":1,"deaths":0},{"player":"Marcus","frags":1,"deaths":5},{"player":"Bryian","frags":0,"deaths":1},{"player":"Jhon","frags":0,"deaths":1},{"player":"Nick","frags":0,"deaths":2}]}%
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+### 4) Stats da partida (vencedor + arma favorita + streak + awards)
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+curl http://localhost:3000/matches/11348965/stats
+```
+```bash
+{"matchId":"11348965","winner":"Roman","favoriteWeapon":"M16","bestStreak":{"player":"Roman","streak":3},"awards":{"noDeathAward":["Roman"],"speedKillerAward":[]}}%
+```
 
-## Support
+## Arquitetura (processamento)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```mermaid
+flowchart TD
+  A[Upload Controller] --> B[Upload Service]
+  B --> C[Parser Service]
+  C --> D[MatchStartParser / KillParser / MatchEndParser]
+  C --> E[MatchRepository]
+  C --> F[PlayerRepository]
+  C --> G[StatsRepository]
+  C --> H[KillEventRepository]
+  E --> I[(SQLite)]
+  F --> I
+  G --> I
+  H --> I
+  I --> J[Matches/Players/Stats APIs]
+  J --> K[Ranking/Stats JSON Response]
+```
