@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: nomad_test_api
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - ./data:/app/prisma
+      - /app/node_modules
+    environment:
+      - DATABASE_URL=file:./prisma/dev.db
+    command: npm run start:dev
