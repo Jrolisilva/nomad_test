@@ -9,3 +9,58 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model Match {
+  id         Int               @id @default(autoincrement())
+  externalId String            @unique
+  startedAt  DateTime
+  endedAt    DateTime?
+  stats      MatchPlayerStats[]
+  killEvents KillEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Player {
+  id     Int               @id @default(autoincrement())
+  name   String            @unique
+  stats  MatchPlayerStats[]
+  kills  KillEvent[]       @relation("KillEventKiller")
+  deaths KillEvent[]       @relation("KillEventVictim")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MatchPlayerStats {
+  id       Int    @id @default(autoincrement())
+  matchId  Int
+  playerId Int
+  frags    Int
+  deaths   Int
+
+  match  Match  @relation(fields: [matchId], references: [id])
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([matchId, playerId])
+  @@index([playerId])
+}
+
+model KillEvent {
+  id         Int      @id @default(autoincrement())
+  matchId    Int
+  killerId   Int?
+  victimId   Int
+  weapon     String
+  isWorld    Boolean  @default(false)
+  occurredAt DateTime
+
+  match  Match  @relation(fields: [matchId], references: [id])
+  killer Player? @relation("KillEventKiller", fields: [killerId], references: [id])
+  victim Player  @relation("KillEventVictim", fields: [victimId], references: [id])
+
+  @@index([matchId])
+  @@index([killerId])
+  @@index([victimId])
+}
