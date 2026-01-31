@@ -57,4 +57,44 @@ export class StatsRepository {
       deaths: entry.deaths,
     }));
   }
+
+  async findGlobalRanking(): Promise<
+    {
+      playerName: string;
+      frags: number;
+      deaths: number;
+    }[]
+  > {
+    const aggregated = await this.prisma.matchPlayerStats.groupBy({
+      by: ['playerId'],
+      _sum: { frags: true, deaths: true },
+      orderBy: [
+        { _sum: { frags: 'desc' } },
+        { _sum: { deaths: 'asc' } },
+      ],
+    });
+
+    if (aggregated.length === 0) {
+      return [];
+    }
+
+    const playerIds = aggregated.map((entry) => entry.playerId);
+    const players = await this.prisma.player.findMany({
+      where: { id: { in: playerIds } },
+      select: { id: true, name: true },
+    });
+
+    const playerNameById = new Map(players.map((player) => [player.id, player.name]));
+
+    return aggregated
+      .map((entry) => ({
+        playerName: playerNameById.get(entry.playerId) ?? 'Unknown',
+        frags: entry._sum.frags ?? 0,
+        deaths: entry._sum.deaths ?? 0,
+      }))
+      .sort(
+        (a, b) =>
+          b.frags - a.frags || a.deaths - b.deaths || a.playerName.localeCompare(b.playerName),
+      );
+  }
 }
