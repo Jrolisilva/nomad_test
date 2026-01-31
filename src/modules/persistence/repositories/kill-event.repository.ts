@@ -61,4 +61,22 @@ export class KillEventRepository {
       },
     });
   }
+
+  findByMatchIdOrderedWithTime(matchId: number): Promise<
+    {
+      occurredAt: Date;
+      killer: { id: number; name: string } | null;
+      isWorld: boolean;
+    }[]
+  > {
+    return this.prisma.killEvent.findMany({
+      where: { matchId },
+      orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
+      select: {
+        occurredAt: true,
+        isWorld: true,
+        killer: { select: { id: true, name: true } },
+      },
+    });
+  }
 }

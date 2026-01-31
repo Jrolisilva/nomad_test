@@ -13,9 +13,10 @@ export class StatsService {
   ) {}
 
   async getMatchStats(externalId: string): Promise<MatchStatsResponseDto> {
-    const [favoriteWeapon, bestStreak] = await Promise.all([
+    const [favoriteWeapon, bestStreak, awards] = await Promise.all([
       this.calculateFavoriteWeapon.execute(externalId),
       this.calculateStreaks.execute(externalId),
+      this.calculateAwards.execute(externalId),
     ]);
 
     return {
@@ -23,6 +24,7 @@ export class StatsService {
       winner: favoriteWeapon.winner,
       favoriteWeapon: favoriteWeapon.favoriteWeapon,
       bestStreak,
+      awards,
     };
   }
 }
