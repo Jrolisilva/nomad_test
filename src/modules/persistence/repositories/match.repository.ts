@@ -24,4 +24,8 @@ export class MatchRepository {
       },
     });
   }
+
+  findByExternalId(externalId: string): Promise<Match | null> {
+    return this.prisma.match.findUnique({ where: { externalId } });
+  }
 }

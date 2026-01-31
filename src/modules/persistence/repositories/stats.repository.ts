@@ -31,4 +31,30 @@ export class StatsRepository {
       },
     });
   }
+
+  async findRankingByMatchId(
+    matchId: number,
+  ): Promise<
+    {
+      playerName: string;
+      frags: number;
+      deaths: number;
+    }[]
+  > {
+    const stats = await this.prisma.matchPlayerStats.findMany({
+      where: { matchId },
+      include: { player: true },
+      orderBy: [
+        { frags: 'desc' },
+        { deaths: 'asc' },
+        { player: { name: 'asc' } },
+      ],
+    });
+
+    return stats.map((entry) => ({
+      playerName: entry.player.name,
+      frags: entry.frags,
+      deaths: entry.deaths,
+    }));
+  }
 }
