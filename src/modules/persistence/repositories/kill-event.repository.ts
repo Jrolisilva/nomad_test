@@ -43,4 +43,22 @@ export class KillEventRepository {
 
     return grouped[0].weapon;
   }
+
+  findByMatchIdOrdered(matchId: number): Promise<
+    {
+      killer: { id: number; name: string } | null;
+      victim: { id: number; name: string };
+      isWorld: boolean;
+    }[]
+  > {
+    return this.prisma.killEvent.findMany({
+      where: { matchId },
+      orderBy: [{ occurredAt: 'asc' }, { id: 'asc' }],
+      select: {
+        isWorld: true,
+        killer: { select: { id: true, name: true } },
+        victim: { select: { id: true, name: true } },
+      },
+    });
+  }
 }

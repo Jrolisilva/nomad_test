@@ -2,7 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { KillEventRepository } from '../../persistence/repositories/kill-event.repository';
 import { MatchRepository } from '../../persistence/repositories/match.repository';
 import { StatsRepository } from '../../persistence/repositories/stats.repository';
-import type { MatchStatsResponseDto } from '../dto/match-stats.dto';
+
+export interface FavoriteWeaponResult {
+  matchId: string;
+  winner: string | null;
+  favoriteWeapon: string | null;
+}
 
 @Injectable()
 export class CalculateFavoriteWeaponUseCase {
@@ -12,7 +17,7 @@ export class CalculateFavoriteWeaponUseCase {
     private readonly killEventRepository: KillEventRepository,
   ) {}
 
-  async execute(externalId: string): Promise<MatchStatsResponseDto> {
+  async execute(externalId: string): Promise<FavoriteWeaponResult> {
     const match = await this.matchRepository.findByExternalId(externalId);
     if (!match) {
       throw new NotFoundException(`Match ${externalId} não encontrada.`);

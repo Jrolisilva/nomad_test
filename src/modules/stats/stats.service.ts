@@ -12,7 +12,17 @@ export class StatsService {
     private readonly calculateFavoriteWeapon: CalculateFavoriteWeaponUseCase,
   ) {}
 
-  getMatchStats(externalId: string): Promise<MatchStatsResponseDto> {
-    return this.calculateFavoriteWeapon.execute(externalId);
+  async getMatchStats(externalId: string): Promise<MatchStatsResponseDto> {
+    const [favoriteWeapon, bestStreak] = await Promise.all([
+      this.calculateFavoriteWeapon.execute(externalId),
+      this.calculateStreaks.execute(externalId),
+    ]);
+
+    return {
+      matchId: favoriteWeapon.matchId,
+      winner: favoriteWeapon.winner,
+      favoriteWeapon: favoriteWeapon.favoriteWeapon,
+      bestStreak,
+    };
   }
 }
