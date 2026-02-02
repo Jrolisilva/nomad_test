@@ -25,6 +25,18 @@
 
 API para processamento de logs de FPS, geração de rankings e estatísticas.
 
+## Versões
+
+- Node.js: 20.x
+- NestJS: 11.x
+
+## Banco de dados
+
+Este projeto utiliza **SQLite** (arquivo local) porque:
+- facilita o setup local e em Docker (sem serviço externo);
+- é leve e suficiente para o volume do desafio;
+- permite persistência via arquivo para testes.
+
 ## Como subir a aplicação
 
 ### Rodando via Docker (recomendado)
